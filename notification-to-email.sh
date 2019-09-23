@@ -6,7 +6,7 @@
 # Aleksey Maksimov <aleksey.maksimov@it-kb.ru>
 #
 PLUGIN_NAME="Plugin for email notifications (HTML format) for Icinga Director"
-PLUGIN_VERSION="2017.05.10"
+PLUGIN_VERSION="2017.09.27"
 PRINTINFO=`printf "\n%s, version %s\n \n" "$PLUGIN_NAME" "$PLUGIN_VERSION"`
 #
 #
@@ -32,6 +32,7 @@ Option   GNU long option         Meaning
  -m      --service-output	 Icinga Service monitoring plugin output (for example, from a variable \$service.output\$)
  -n      --mail-to		 Email address for "To:" header (for example, from a variable \$user.email\$)
  -o      --mail-from		 Email address for "From:" header. Static value (for example, Icinga@mycorp.com)
+ -z      --item-comment		 Additional item comment with custom variable from Host or Service (for example, from a variable \$host.Notification_Comment\$)
  -p      --icingaweb-url	 Icinga Web URL for link to Host or Service. Static value (for example, http://icinga.mycorp.com/icingaweb2/monitoring)
  -q      --help                  Show this message
  -v      --version		 Print version information and exit
@@ -41,7 +42,7 @@ Option   GNU long option         Meaning
 #
 # Parse arguments
 #
-OPTS=`getopt -o M:a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:p:qv -l plugin-mode:,notification-type:,notification-autor:,notification-comment:,long-datetime:,host-displayname:,host-alias:,host-address:,host-state:,host-output:,service-displayname:,service-desc:,service-state:,service-output:,mail-to:,mail-from:,icingaweb-url:,help,version -- "$@"`
+OPTS=`getopt -o M:a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:z:p:qv -l plugin-mode:,notification-type:,notification-autor:,notification-comment:,long-datetime:,host-displayname:,host-alias:,host-address:,host-state:,host-output:,service-displayname:,service-desc:,service-state:,service-output:,mail-to:,mail-from:,item-comment:,icingaweb-url:,help,version -- "$@"`
 eval set -- "$OPTS"
 while true; do
         case $1 in
@@ -80,6 +81,8 @@ while true; do
                         MAILTO=$2 ; shift 2 ;;
                 -o|--mail-from)
                         MAILFROM=$2 ; shift 2 ;;
+                -z|--item-comment)
+                        ITEMCOMMENT=$2 ; shift 2 ;;
                 -p|--icingaweb-url)
                         ICINGAWEBURL=$2 ; shift 2 ;;
                 -q|--help)
@@ -97,6 +100,18 @@ done
 #
 TIMETOMAIL=`echo $(date -d "$LONGDATETIME" +"%d.%m.%Y %T %Z")`
 SERVICETOMAIL=`echo $SERVICEDESC | sed 's/ /%20/g'`
+#
+#
+ITEMCOMMENTTOMAIL=""
+if [ -n "$ITEMCOMMENT" ]; then ITEMCOMMENTTOMAIL=`cat <<EOT
+<p><table><tbody>
+<tr>
+  <td width="125">Item comment:</td><td>$ITEMCOMMENT</td>
+</tr>
+</tbody></table></p>
+EOT
+`
+fi
 #
 #
 COMMENTTOMAIL=""
@@ -157,6 +172,7 @@ template=`cat <<TEMPLATE
   <td width="125">Raised Time:</td><td>$TIMETOMAIL</td>
 </tr>
 </tbody></table></p>
+<br>$ITEMCOMMENTTOMAIL
 <br>$COMMENTTOMAIL
 <p><a href=$ICINGAWEBURL/host/show?host=$HOSTALIAS>Icinga Host view link</a></p>
 </body>
@@ -211,6 +227,7 @@ elif [ "$PLUGINMODE" = "service-mode" ]; then
    <td width="125">Raised Time:</td><td>$TIMETOMAIL</td>
  </tr>
 </tbody></table></p>
+<br>$ITEMCOMMENTTOMAIL
 <br>$COMMENTTOMAIL
 <p><a href=$ICINGAWEBURL/service/show?host=$HOSTALIAS&amp;service=$SERVICETOMAIL>Icinga Service view link</a></p>
 </body>
@@ -228,3 +245,16 @@ fi
 -a 'Content-Type: text/html; charset="utf-8"' \
 -s "$MAILSUBJECT" \
 $MAILTO
+#
+#
+#
+#
+# TO DO
+#
+# 1. Add charset fir headers From, To, Subject
+# $VARB64 = ( echo -n $VAR | base64 )
+# Subject =?utf-8?B?$VARB64?=
+#
+#
+#
+#
