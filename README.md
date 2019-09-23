@@ -1,6 +1,6 @@
 ## About
 
-**notification-to-email** - Script for email notifications (HTML format) for Icinga 
+**notification-to-email** - Script for email notifications (Host and Service) in HTML format for Icinga.  
 
 Tested on **Debian GNU/Linux 8.7 (Jessie)** with **Icinga r2.6.2-1**
 
