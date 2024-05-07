@@ -1,12 +1,16 @@
 #!/bin/sh
 #
 # Script for email notifications (HTML format) for Icinga 
-# Tested on Debian GNU/Linux 8.7 (Jessie) with Icinga r2.6.2-1 
+# Tested on : 
+# - Debian GNU/Linux 8 (Jessie) with Icinga r2.6.2-1 
+# - Debian GNU/Linux 9 (Stretch) with exim4 and Icinga r2.11.1-1
+# - Debian GNU/Linux 10 (Buster) with exim4 and Icinga r2.14.2-1
+# - Debian GNU/Linux 12 (Bookworm) with exim4 and Icinga r2.14.2-1
 # Put here /etc/icinga2/scripts/notification-to-email.sh 
 # Aleksey Maksimov <aleksey.maksimov@it-kb.ru>
 #
 PLUGIN_NAME="Plugin for email notifications (HTML format) for Icinga Director"
-PLUGIN_VERSION="2017.09.27"
+PLUGIN_VERSION="2024.05.07"
 PRINTINFO=`printf "\n%s, version %s\n \n" "$PLUGIN_NAME" "$PLUGIN_VERSION"`
 #
 #
@@ -128,7 +132,7 @@ fi
 #
 if [ "$PLUGINMODE" = "host-mode" ]; then
 	#
-	MAILSUBJECT=`echo Icinga $NOTIFICATIONTYPE alert - $HOSTDISPLAYNAME is $HOSTSTATE`
+	MAILSUBJECT=`echo [$NOTIFICATIONTYPE] $HOSTDISPLAYNAME is $HOSTSTATE`
 	#
 	BACKGROUND=#C9C9C9
 	if [ "$HOSTSTATE" = "UP" ]; then
@@ -151,7 +155,7 @@ template=`cat <<TEMPLATE
 <body>
 <p><table><tbody>
 <tr>
-  <th colspan="2" align="center">Icinga $NOTIFICATIONTYPE Notification</th>
+  <th colspan="2" align="center">Icinga Notification</th>
 </tr>
 <tr>
   <td width="125">Host:</td><td><strong>$HOSTDISPLAYNAME</strong></td>
@@ -183,7 +187,7 @@ TEMPLATE
 	#
 elif [ "$PLUGINMODE" = "service-mode" ]; then
 	#
-	MAILSUBJECT=`echo Icinga $NOTIFICATIONTYPE alert - $HOSTDISPLAYNAME - $SERVICEDISPLAYNAME is $SERVICESTATE`
+	MAILSUBJECT=`echo [$NOTIFICATIONTYPE] $HOSTDISPLAYNAME - $SERVICEDISPLAYNAME is $SERVICESTATE`
 	#
 	BACKGROUND=#C9C9C9
 	if [ "$SERVICESTATE" = "OK" ]; then
@@ -207,7 +211,7 @@ elif [ "$PLUGINMODE" = "service-mode" ]; then
 <body>
 <p><table><tbody>
  <tr>
-   <th colspan="2" align="center">Icinga $NOTIFICATIONTYPE Notification</th>
+   <th colspan="2" align="center">Icinga Notification</th>
  </tr>
  <tr>
    <td width="125">Service:</td><td><strong>$SERVICEDESC</strong></td>
@@ -247,14 +251,9 @@ fi
 $MAILTO
 #
 #
-#
-#
 # TO DO
 #
-# 1. Add charset fir headers From, To, Subject
+# 1. Add charset for headers From, To, Subject
 # $VARB64 = ( echo -n $VAR | base64 )
 # Subject =?utf-8?B?$VARB64?=
-#
-#
-#
 #
