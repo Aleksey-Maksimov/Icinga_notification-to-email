@@ -2,7 +2,11 @@
 
 **notification-to-email** - Script for email notifications (Host and Service) in HTML format for Icinga.  
 
-Tested on **Debian GNU/Linux 8.7 (Jessie)** with **Icinga r2.6.2-1**
+Tested on : 
+- Debian GNU/Linux 8 (Jessie) with Icinga r2.6.2-1 
+- Debian GNU/Linux 9 (Stretch) with exim4 and Icinga r2.11.1-1
+- Debian GNU/Linux 10 (Buster) with exim4 and Icinga r2.14.2-1
+- Debian GNU/Linux 12 (Bookworm) with exim4 and Icinga r2.14.2-1
 
 Put here /etc/icinga2/scripts/notification-to-email.sh 
  
