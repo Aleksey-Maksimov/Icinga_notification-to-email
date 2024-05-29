@@ -49,6 +49,7 @@ Option  GNU long option         Meaning
                                 Static value (for example, Icinga@mycorp.com)
 -p      --icingaweb-url         Icinga Web URL for link to Host or Service. Static value 
                                 (for example, http://icinga.mycorp.com/icingaweb2/monitoring)
+-u      --icingaweb-url-format  Icinga Web URL format for link to Host or Service. Static value. Possible values: monitoring|icingadb
 -q      --help                  Show this message
 -v      --version               Print version information and exit
 
