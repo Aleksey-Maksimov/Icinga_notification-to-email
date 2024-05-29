@@ -10,7 +10,7 @@
 # Aleksey Maksimov <aleksey.maksimov@it-kb.ru>
 #
 PLUGIN_NAME="Plugin for email notifications (HTML format) for Icinga Director"
-PLUGIN_VERSION="2024.05.07"
+PLUGIN_VERSION="2024.05.29"
 PRINTINFO=`printf "\n%s, version %s\n \n" "$PLUGIN_NAME" "$PLUGIN_VERSION"`
 #
 #
@@ -37,7 +37,8 @@ Option   GNU long option         Meaning
  -n      --mail-to		 Email address for "To:" header (for example, from a variable \$user.email\$)
  -o      --mail-from		 Email address for "From:" header. Static value (for example, Icinga@mycorp.com)
  -z      --item-comment		 Additional item comment with custom variable from Host or Service (for example, from a variable \$host.Notification_Comment\$)
- -p      --icingaweb-url	 Icinga Web URL for link to Host or Service. Static value (for example, http://icinga.mycorp.com/icingaweb2/monitoring)
+ -p      --icingaweb-url	 Icinga Web root URL for link to Host or Service. Static value (for example, http://icinga.mycorp.com/icingaweb2/monitoring)
+ -u      --icingaweb-url-format  Icinga Web URL format for link to Host or Service. Static value. Possible values: monitoring|icingadb
  -q      --help                  Show this message
  -v      --version		 Print version information and exit
 
@@ -46,7 +47,7 @@ Option   GNU long option         Meaning
 #
 # Parse arguments
 #
-OPTS=`getopt -o M:a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:z:p:qv -l plugin-mode:,notification-type:,notification-autor:,notification-comment:,long-datetime:,host-displayname:,host-alias:,host-address:,host-state:,host-output:,service-displayname:,service-desc:,service-state:,service-output:,mail-to:,mail-from:,item-comment:,icingaweb-url:,help,version -- "$@"`
+OPTS=`getopt -o M:a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:z:p:u:qv -l plugin-mode:,notification-type:,notification-autor:,notification-comment:,long-datetime:,host-displayname:,host-alias:,host-address:,host-state:,host-output:,service-displayname:,service-desc:,service-state:,service-output:,mail-to:,mail-from:,item-comment:,icingaweb-url:,icingaweb-url-format:,help,version -- "$@"`
 eval set -- "$OPTS"
 while true; do
         case $1 in
@@ -89,6 +90,11 @@ while true; do
                         ITEMCOMMENT=$2 ; shift 2 ;;
                 -p|--icingaweb-url)
                         ICINGAWEBURL=$2 ; shift 2 ;;
+                -u|--icingaweb-url-format)
+                        case "$2" in
+                        "monitoring"|"icingadb") ICINGAWEBURLF=$2 ; shift 2 ;;
+                                                 *) printf "Unknown value for option %s. Use 'monitoring' or 'icingadb'\n" "$1" ; exit 1 ;;
+                        esac ;;
                 -q|--help)
                         Usage ; exit 0 ;;
                 -v|--version)
@@ -104,6 +110,14 @@ done
 #
 TIMETOMAIL=`echo $(date -d "$LONGDATETIME" +"%d.%m.%Y %T %Z")`
 SERVICETOMAIL=`echo $SERVICEDESC | sed 's/ /%20/g'`
+#
+if [ "$ICINGAWEBURLF" = "monitoring" ]; then
+	HOSTMAILURL=`echo $ICINGAWEBURL/host/show?host=$HOSTALIAS`
+        SERVICEMAILURL=`echo $ICINGAWEBURL/service/show?host=$HOSTALIAS\&service=$SERVICETOMAIL`
+elif [ "$ICINGAWEBURLF" = "icingadb" ]; then
+        HOSTMAILURL=`echo $ICINGAWEBURL/host?name=$HOSTALIAS`
+        SERVICEMAILURL=`echo $ICINGAWEBURL/service?name=$SERVICETOMAIL\&host.name=$HOSTALIAS`
+fi
 #
 #
 ITEMCOMMENTTOMAIL=""
@@ -178,7 +192,7 @@ template=`cat <<TEMPLATE
 </tbody></table></p>
 <br>$ITEMCOMMENTTOMAIL
 <br>$COMMENTTOMAIL
-<p><a href=$ICINGAWEBURL/host/show?host=$HOSTALIAS>Icinga Host view link</a></p>
+<p><a href=$HOSTMAILURL>Icinga Host view link</a></p>
 </body>
 </html>
 TEMPLATE
@@ -233,7 +247,7 @@ elif [ "$PLUGINMODE" = "service-mode" ]; then
 </tbody></table></p>
 <br>$ITEMCOMMENTTOMAIL
 <br>$COMMENTTOMAIL
-<p><a href=$ICINGAWEBURL/service/show?host=$HOSTALIAS&amp;service=$SERVICETOMAIL>Icinga Service view link</a></p>
+<p><a href=$SERVICEMAILURL>Icinga Service view link</a></p>
 </body>
 </html>
 TEMPLATE
